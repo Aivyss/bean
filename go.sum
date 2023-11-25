@@ -1,5 +1,9 @@
 github.com/aivyss/typex v1.0.6 h1:2rBK743F5dvTwrakQDg5PTwaGLdlvLqMiSylelQb7n0=
 github.com/aivyss/typex v1.0.6/go.mod h1:8luE6hnCtP7B92b9tFGPZ4pfjdG6BgEvocwvM0FTkBk=
+github.com/aivyss/typex v1.0.7 h1:vFtsv8IDAVpuma7rRXz+GKpF/jW8i2sdet05Q6k18w4=
+github.com/aivyss/typex v1.0.7/go.mod h1:8luE6hnCtP7B92b9tFGPZ4pfjdG6BgEvocwvM0FTkBk=
+github.com/aivyss/typex v1.0.8 h1:Hvo6j1jkMc/GoTpXuo1jHm4+eM/Al5a3QOBTSwnqshE=
+github.com/aivyss/typex v1.0.8/go.mod h1:8luE6hnCtP7B92b9tFGPZ4pfjdG6BgEvocwvM0FTkBk=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=

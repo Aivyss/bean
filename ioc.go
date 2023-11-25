@@ -8,7 +8,7 @@ import (
 
 var m = map[reflect.Type]any{}
 
-func RegisterBeanWithArgs[T any](constructor any, args ...any) error {
+func RegisterBeanWithArgs(constructor any, args ...any) error {
 	fnTypeOf := reflect.TypeOf(constructor)
 
 	paramTypes := make([]reflect.Type, 0, fnTypeOf.NumIn())
@@ -48,10 +48,9 @@ func RegisterBeanWithArgs[T any](constructor any, args ...any) error {
 
 	// check error
 	var e error
-	errorTypeOf := reflect.TypeOf(e)
 	isError := false
 	for _, r := range returns {
-		if r.Type() == errorTypeOf && !util.IsNil(r.Interface()) {
+		if r.Type() == getGenericType[error]() && !util.IsNil(r.Interface()) {
 			e = r.Interface().(error)
 			isError = true
 			break
@@ -63,12 +62,10 @@ func RegisterBeanWithArgs[T any](constructor any, args ...any) error {
 	}
 
 	// check bean
-	beanTargetTypeOf := getGenericType[T]()
-
 	isDetectedTheBean := false
 	for _, r := range returns {
-		if r.Type() == beanTargetTypeOf {
-			m[beanTargetTypeOf] = r.Interface()
+		if r.Type() != getGenericType[error]() {
+			m[r.Type()] = r.Interface()
 			isDetectedTheBean = true
 			break
 		}
@@ -81,7 +78,7 @@ func RegisterBeanWithArgs[T any](constructor any, args ...any) error {
 	return nil
 }
 
-func RegisterBean[T any](constructor any) error {
+func RegisterBean(constructor any) error {
 	fnTypeOf := reflect.TypeOf(constructor)
 
 	paramTypes := make([]reflect.Type, 0, fnTypeOf.NumIn())
@@ -123,12 +120,10 @@ func RegisterBean[T any](constructor any) error {
 	}
 
 	// check bean
-	beanTargetTypeOf := getGenericType[T]()
-
 	isDetectedTheBean := false
 	for _, r := range returns {
-		if r.Type() == beanTargetTypeOf {
-			m[beanTargetTypeOf] = r.Interface()
+		if r.Type() != getGenericType[error]() {
+			m[r.Type()] = r.Interface()
 			isDetectedTheBean = true
 			break
 		}

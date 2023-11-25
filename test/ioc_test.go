@@ -10,7 +10,7 @@ import (
 
 func TestRegisterBean(t *testing.T) {
 	t.Run("basic test", func(t *testing.T) {
-		err := bean.RegisterBean[testEntity.TestInterface1](func() testEntity.TestInterface1 {
+		err := bean.RegisterBean(func() testEntity.TestInterface1 {
 			return &testEntity.TestStruct1{}
 		})
 
@@ -22,12 +22,12 @@ func TestRegisterBean(t *testing.T) {
 	})
 
 	t.Run("nested test", func(t *testing.T) {
-		err := bean.RegisterBean[testEntity.TestInterface2](func() testEntity.TestInterface2 {
+		err := bean.RegisterBean(func() testEntity.TestInterface2 {
 			return &testEntity.TestStruct2{}
 		})
 		assert.Nil(t, err)
 
-		err = bean.RegisterBean[testEntity.TestInterface3](testEntity.NewTestInterface3)
+		err = bean.RegisterBean(testEntity.NewTestInterface3)
 		assert.Nil(t, err)
 
 		bean2, err := bean.GetBean[testEntity.TestInterface2]()
@@ -41,7 +41,7 @@ func TestRegisterBean(t *testing.T) {
 
 	t.Run("error check", func(t *testing.T) {
 		errMsg := "test error"
-		err := bean.RegisterBean[testEntity.TestInterface2](func() (testEntity.TestInterface2, error) {
+		err := bean.RegisterBean(func() (testEntity.TestInterface2, error) {
 			return nil, errors.New(errMsg)
 		})
 
@@ -50,7 +50,7 @@ func TestRegisterBean(t *testing.T) {
 
 		bean.Clean()
 
-		err = bean.RegisterBean[testEntity.TestInterface2](func() (testEntity.TestInterface2, error) {
+		err = bean.RegisterBean(func() (testEntity.TestInterface2, error) {
 			return &testEntity.TestStruct2{}, nil
 		})
 		assert.Nil(t, err)
@@ -60,14 +60,25 @@ func TestRegisterBean(t *testing.T) {
 	})
 }
 
+func TestBasicTestPointer(t *testing.T) {
+	type TestStruct struct{}
+	newTestStruct := func() *TestStruct { return &TestStruct{} }
+	err := bean.RegisterBean(newTestStruct)
+	assert.Nil(t, err)
+
+	b, err := bean.GetBean[*TestStruct]()
+	assert.Nil(t, err)
+	assert.NotNil(t, b)
+}
+
 func TestRegisterBeanWithArgs(t *testing.T) {
 	t.Run("RegisterBeanWithArgs", func(t *testing.T) {
-		err := bean.RegisterBean[testEntity.TestInterface4](func() testEntity.TestInterface4 {
+		err := bean.RegisterBean(func() testEntity.TestInterface4 {
 			return &testEntity.TestStruct4{}
 		})
 		assert.Nil(t, err)
 
-		err = bean.RegisterBeanWithArgs[testEntity.TestInterface5](
+		err = bean.RegisterBeanWithArgs(
 			testEntity.NewTestInterface5,
 			testEntity.TestInterface6(&testEntity.TestStruct6{}),
 		)
