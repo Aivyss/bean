@@ -2,7 +2,8 @@ package bean
 
 import (
 	"errors"
-	"github.com/aivyss/typex/util"
+	"github.com/aivyss/typex/slice"
+	"github.com/aivyss/typex/types"
 	"reflect"
 )
 
@@ -35,7 +36,7 @@ func RegisterBeanWithArgs(constructor any, args ...any) error {
 		}
 	}
 
-	if len(util.Filter(beans, func(param any) bool { return param == nil })) > 0 {
+	if len(slice.Filter(beans, func(param any) bool { return param == nil })) > 0 {
 		return errors.New("no bean")
 	}
 
@@ -50,7 +51,7 @@ func RegisterBeanWithArgs(constructor any, args ...any) error {
 	var e error
 	isError := false
 	for _, r := range returns {
-		if r.Type() == getGenericType[error]() && !util.IsNil(r.Interface()) {
+		if r.Type() == getGenericType[error]() && !types.IsNil(r.Interface()) {
 			e = r.Interface().(error)
 			isError = true
 			break
@@ -95,7 +96,7 @@ func RegisterBean(constructor any) error {
 		}
 	}
 
-	if len(util.Filter(beans, func(param any) bool { return param == nil })) > 0 {
+	if len(slice.Filter(beans, func(param any) bool { return param == nil })) > 0 {
 		return errors.New("no bean")
 	}
 
@@ -109,7 +110,7 @@ func RegisterBean(constructor any) error {
 	// check error
 	var e error = nil
 	for _, r := range returns {
-		if r.Type() == getGenericType[error]() && !util.IsNil(r.Interface()) {
+		if r.Type() == getGenericType[error]() && !types.IsNil(r.Interface()) {
 			e = r.Interface().(error)
 			break
 		}
