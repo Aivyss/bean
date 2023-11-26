@@ -95,23 +95,34 @@ func TestRegisterBeanWithArgs(t *testing.T) {
 }
 
 func TestBeanBuffer(t *testing.T) {
-	buff := bean.GetBeanBuffer()
-	buff.RegisterBean(testEntity.NewTestBeanBufferInterface3)
-	buff.RegisterBean(testEntity.NewTestBeanBufferInterface2)
-	buff.RegisterBean(testEntity.NewTestBeanBufferInterface1)
+	t.Run("buffer test - no error", func(t *testing.T) {
+		buff := bean.GetBeanBuffer()
+		buff.RegisterBean(testEntity.NewTestBeanBufferInterface3)
+		buff.RegisterBean(testEntity.NewTestBeanBufferInterface2)
+		buff.RegisterBean(testEntity.NewTestBeanBufferInterface1)
 
-	errs := buff.Buffer()
-	assert.Empty(t, errs)
+		errs := buff.Buffer()
+		assert.Empty(t, errs)
 
-	bean1, err := bean.GetBean[testEntity.TestBeanBufferInterface1]()
-	assert.Nil(t, err)
-	assert.NotNil(t, bean1)
+		bean1, err := bean.GetBean[testEntity.TestBeanBufferInterface1]()
+		assert.Nil(t, err)
+		assert.NotNil(t, bean1)
 
-	bean2, err := bean.GetBean[testEntity.TestBeanBufferInterface2]()
-	assert.Nil(t, err)
-	assert.NotNil(t, bean2)
+		bean2, err := bean.GetBean[testEntity.TestBeanBufferInterface2]()
+		assert.Nil(t, err)
+		assert.NotNil(t, bean2)
 
-	bean3, err := bean.GetBean[testEntity.TestBeanBufferInterface3]()
-	assert.Nil(t, err)
-	assert.NotNil(t, bean3)
+		bean3, err := bean.GetBean[testEntity.TestBeanBufferInterface3]()
+		assert.Nil(t, err)
+		assert.NotNil(t, bean3)
+
+		t.Run("2 times buffer", func(t *testing.T) {
+			err := buff.Buffer()
+			assert.NotNil(t, err)
+		})
+	})
+}
+
+func TestBuffer2(t *testing.T) {
+
 }

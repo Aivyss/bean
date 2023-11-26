@@ -6,6 +6,6 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	bean.Clean()
 	m.Run()
+	bean.Clean()
 }

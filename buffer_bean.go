@@ -1,70 +1,90 @@
 package bean
 
 import (
+	"errors"
+	"fmt"
 	"github.com/aivyss/typex"
 	"reflect"
 	"sync"
 )
 
-var bufferOnce sync.Once
 var buffCreateOnce sync.Once
 var buff *beanBuffer = nil
 
 type beanBuffer struct {
-	constructors []any
-	args         [][]any
+	bufferOnce     sync.Once
+	constructorMap map[reflect.Type]struct {
+		constructor any
+		args        []any
+	}
 }
 
 func GetBeanBuffer() *beanBuffer {
 	buffCreateOnce.Do(func() {
-		buff = &beanBuffer{}
+		buff = &beanBuffer{
+			constructorMap: map[reflect.Type]struct {
+				constructor any
+				args        []any
+			}{},
+		}
 	})
 
 	return buff
 }
 
 func (b *beanBuffer) RegisterBean(constructor any) {
-	b.constructors = append(b.constructors, constructor)
-	b.args = append(b.args, []any{})
+	beanType := reflect.TypeOf(constructor).Out(0)
+	b.constructorMap[beanType] = struct {
+		constructor any
+		args        []any
+	}{constructor: constructor, args: []any{}}
 }
 
 func (b *beanBuffer) RegisterBeanWithArgs(constructor any, args ...any) {
-	b.constructors = append(b.constructors, constructor)
-	b.args = append(b.args, args)
+	beanType := reflect.TypeOf(constructor).Out(0)
+	b.constructorMap[beanType] = struct {
+		constructor any
+		args        []any
+	}{constructor: constructor, args: args}
 }
 
 func (b *beanBuffer) Buffer() error {
 	var err error
-	bufferOnce.Do(func() {
-		idxMap := map[reflect.Type]int{}
-		for idx, constructor := range b.constructors {
-			out := reflect.TypeOf(constructor).Out(0)
-			idxMap[out] = idx
-		}
+	isAlreadyInitialized := true
 
+	b.bufferOnce.Do(func() {
 		dependencyTrees := b.GetDependencyTrees()
 		for _, tree := range dependencyTrees {
-			if e := b.registerBeanRecursive(tree, idxMap); e != nil {
+			if e := b.registerBeanRecursive(tree); e != nil {
 				err = e
 				break
 			}
 		}
+
+		// release constructor resource
+		isAlreadyInitialized = false
+		b.constructorMap = nil
 	})
+
+	if isAlreadyInitialized {
+		err = errors.New("beans already is registered")
+	}
 
 	return err
 }
 
 func (b *beanBuffer) GetDependencyTrees() []typex.DescendNode[reflect.Type] {
 	var result []typex.DescendNode[reflect.Type]
-	for _, constructor := range b.constructors {
+
+	for t, constructorInfo := range b.constructorMap {
 		var leaves []typex.DescendNode[reflect.Type]
-		typeOf := reflect.TypeOf(constructor)
+		typeOf := reflect.TypeOf(constructorInfo.constructor)
 		for i := 0; i < typeOf.NumIn(); i++ {
 			leaf := b.recursiveDependencyTree(typeOf.In(i))
 			leaves = append(leaves, leaf)
 		}
 
-		node := typex.NewDescendNode(typeOf.Out(0))
+		node := typex.NewDescendNode(t)
 		for _, leaf := range leaves {
 			node.AddDescendantNode(leaf)
 		}
@@ -77,39 +97,42 @@ func (b *beanBuffer) GetDependencyTrees() []typex.DescendNode[reflect.Type] {
 
 func (b *beanBuffer) recursiveDependencyTree(in reflect.Type) typex.DescendNode[reflect.Type] {
 	var trees []typex.DescendNode[reflect.Type]
-	for _, constructor := range b.constructors {
-		typeOf := reflect.TypeOf(constructor)
-		if typeOf.Out(0) == in {
-			for i := 0; i < typeOf.NumIn(); i++ {
-				leaf := b.recursiveDependencyTree(typeOf.In(i))
-				trees = append(trees, leaf)
-			}
+
+	if constructorInfo, ok := b.constructorMap[in]; ok {
+		typeOf := reflect.TypeOf(constructorInfo.constructor)
+		for i := 0; i < typeOf.NumIn(); i++ {
+			leaf := b.recursiveDependencyTree(typeOf.In(i))
+			trees = append(trees, leaf)
 		}
+
+		node := typex.NewDescendNode(in)
+		for _, leaf := range trees {
+			node.AddDescendantNode(leaf)
+		}
+
+		return node
 	}
 
-	node := typex.NewDescendNode(in)
-	for _, leaf := range trees {
-		node.AddDescendantNode(leaf)
-	}
-	return node
+	return typex.NewDescendNode(in)
 }
 
-func (b *beanBuffer) registerBeanRecursive(tree typex.DescendNode[reflect.Type], idxMap map[reflect.Type]int) error {
+func (b *beanBuffer) registerBeanRecursive(tree typex.DescendNode[reflect.Type]) error {
 	if _, ok := m[tree.This()]; ok {
 		return nil
 	}
+
 	if tree.HasDescendants() {
 		for _, child := range tree.GetDescendants() {
-			err := b.registerBeanRecursive(child, idxMap)
+			err := b.registerBeanRecursive(child)
 			if err != nil {
 				return err
 			}
 		}
 	}
 
-	if idx, ok := idxMap[tree.This()]; ok {
-		return RegisterBeanWithArgs(b.constructors[idx], b.args[idx])
+	if constructorInfo, ok := b.constructorMap[tree.This()]; ok {
+		return RegisterBeanWithArgs(constructorInfo.constructor, constructorInfo.args)
 	}
 
-	return nil
+	return errors.New(fmt.Sprintf("fail to create bean: %s\n", tree.This().String()))
 }
