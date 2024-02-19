@@ -3,13 +3,10 @@ package bean
 import (
 	"errors"
 	"fmt"
-	"github.com/aivyss/typex"
+	"github.com/aivyss/typex/collection"
 	"reflect"
 	"sync"
 )
-
-var buffCreateOnce sync.Once
-var buff *beanBuffer = nil
 
 type beanBuffer struct {
 	bufferOnce     sync.Once
@@ -20,16 +17,12 @@ type beanBuffer struct {
 }
 
 func GetBeanBuffer() *beanBuffer {
-	buffCreateOnce.Do(func() {
-		buff = &beanBuffer{
-			constructorMap: map[reflect.Type]struct {
-				constructor any
-				args        []any
-			}{},
-		}
-	})
-
-	return buff
+	return &beanBuffer{
+		constructorMap: map[reflect.Type]struct {
+			constructor any
+			args        []any
+		}{},
+	}
 }
 
 func (b *beanBuffer) RegisterBean(constructor any) {
@@ -53,7 +46,7 @@ func (b *beanBuffer) Buffer() error {
 	isAlreadyInitialized := true
 
 	b.bufferOnce.Do(func() {
-		dependencyTrees := b.GetDependencyTrees()
+		dependencyTrees := b.getDependencyTrees()
 		for _, tree := range dependencyTrees {
 			if e := b.registerBeanRecursive(tree); e != nil {
 				err = e
@@ -73,18 +66,18 @@ func (b *beanBuffer) Buffer() error {
 	return err
 }
 
-func (b *beanBuffer) GetDependencyTrees() []typex.DescendNode[reflect.Type] {
-	var result []typex.DescendNode[reflect.Type]
+func (b *beanBuffer) getDependencyTrees() []collection.DescendNode[reflect.Type] {
+	var result []collection.DescendNode[reflect.Type]
 
 	for t, constructorInfo := range b.constructorMap {
-		var leaves []typex.DescendNode[reflect.Type]
+		var leaves []collection.DescendNode[reflect.Type]
 		typeOf := reflect.TypeOf(constructorInfo.constructor)
 		for i := 0; i < typeOf.NumIn(); i++ {
 			leaf := b.recursiveDependencyTree(typeOf.In(i))
 			leaves = append(leaves, leaf)
 		}
 
-		node := typex.NewDescendNode(t)
+		node := collection.NewDescendNode(t)
 		for _, leaf := range leaves {
 			node.AddDescendantNode(leaf)
 		}
@@ -95,8 +88,8 @@ func (b *beanBuffer) GetDependencyTrees() []typex.DescendNode[reflect.Type] {
 	return result
 }
 
-func (b *beanBuffer) recursiveDependencyTree(in reflect.Type) typex.DescendNode[reflect.Type] {
-	var trees []typex.DescendNode[reflect.Type]
+func (b *beanBuffer) recursiveDependencyTree(in reflect.Type) collection.DescendNode[reflect.Type] {
+	var trees []collection.DescendNode[reflect.Type]
 
 	if constructorInfo, ok := b.constructorMap[in]; ok {
 		typeOf := reflect.TypeOf(constructorInfo.constructor)
@@ -105,7 +98,7 @@ func (b *beanBuffer) recursiveDependencyTree(in reflect.Type) typex.DescendNode[
 			trees = append(trees, leaf)
 		}
 
-		node := typex.NewDescendNode(in)
+		node := collection.NewDescendNode(in)
 		for _, leaf := range trees {
 			node.AddDescendantNode(leaf)
 		}
@@ -113,10 +106,10 @@ func (b *beanBuffer) recursiveDependencyTree(in reflect.Type) typex.DescendNode[
 		return node
 	}
 
-	return typex.NewDescendNode(in)
+	return collection.NewDescendNode(in)
 }
 
-func (b *beanBuffer) registerBeanRecursive(tree typex.DescendNode[reflect.Type]) error {
+func (b *beanBuffer) registerBeanRecursive(tree collection.DescendNode[reflect.Type]) error {
 	if _, ok := m[tree.This()]; ok {
 		return nil
 	}

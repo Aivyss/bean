@@ -2,8 +2,8 @@ package bean
 
 import (
 	"errors"
-	"github.com/aivyss/typex/slice"
-	"github.com/aivyss/typex/types"
+	"github.com/aivyss/typex/collection"
+	"github.com/aivyss/typex/utilx"
 	"reflect"
 )
 
@@ -36,7 +36,7 @@ func RegisterBeanWithArgs(constructor any, args ...any) error {
 		}
 	}
 
-	if len(slice.Filter(beans, func(param any) bool { return param == nil })) > 0 {
+	if len(collection.Filter(beans, func(param any) bool { return param == nil })) > 0 {
 		return errors.New("no bean")
 	}
 
@@ -51,7 +51,7 @@ func RegisterBeanWithArgs(constructor any, args ...any) error {
 	var e error
 	isError := false
 	for _, r := range returns {
-		if r.Type() == getGenericType[error]() && !types.IsNil(r.Interface()) {
+		if r.Type() == utilx.GetGenericType[error]() && !utilx.IsNil(r.Interface()) {
 			e = r.Interface().(error)
 			isError = true
 			break
@@ -65,7 +65,7 @@ func RegisterBeanWithArgs(constructor any, args ...any) error {
 	// check bean
 	isDetectedTheBean := false
 	for _, r := range returns {
-		if r.Type() != getGenericType[error]() {
+		if r.Type() != utilx.GetGenericType[error]() {
 			m[r.Type()] = r.Interface()
 			isDetectedTheBean = true
 			break
@@ -96,7 +96,7 @@ func RegisterBean(constructor any) error {
 		}
 	}
 
-	if len(slice.Filter(beans, func(param any) bool { return param == nil })) > 0 {
+	if len(collection.Filter(beans, func(param any) bool { return param == nil })) > 0 {
 		return errors.New("no bean")
 	}
 
@@ -110,7 +110,7 @@ func RegisterBean(constructor any) error {
 	// check error
 	var e error = nil
 	for _, r := range returns {
-		if r.Type() == getGenericType[error]() && !types.IsNil(r.Interface()) {
+		if r.Type() == utilx.GetGenericType[error]() && !utilx.IsNil(r.Interface()) {
 			e = r.Interface().(error)
 			break
 		}
@@ -123,7 +123,7 @@ func RegisterBean(constructor any) error {
 	// check bean
 	isDetectedTheBean := false
 	for _, r := range returns {
-		if r.Type() != getGenericType[error]() {
+		if r.Type() != utilx.GetGenericType[error]() {
 			m[r.Type()] = r.Interface()
 			isDetectedTheBean = true
 			break
@@ -138,7 +138,7 @@ func RegisterBean(constructor any) error {
 }
 
 func GetBean[T any]() (T, error) {
-	genericType := getGenericType[T]()
+	genericType := utilx.GetGenericType[T]()
 	if b, ok := m[genericType]; ok {
 		return b.(T), nil
 	}
