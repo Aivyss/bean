@@ -1,0 +1,6 @@
+github.com/aivyss/bean v1.1.0 h1:NWHHirwXro74hcDY6c3Z3Mzio9pkaHuE8Dm57IXZnnQ=
+github.com/aivyss/bean v1.1.0/go.mod h1:aXVWDoOC00Aa+MXVc6CX5vZdAc4ppj3IWQHKohzGVxA=
+github.com/aivyss/typex v1.1.2 h1:u7P3cytAwSpWUYG45WV3iMSiMxIMX+SkdxRZNu545pk=
+github.com/aivyss/typex v1.1.2/go.mod h1:99Q1UNhlhStW7yWel5xZLb5Prm/yGQJkh6SRE4ppClI=
+github.com/mattn/go-sqlite3 v1.14.22 h1:2gZY6PC6kBnID23Tichd1K+Z0oS6nE/XwU+Vz/5o4kU=
+github.com/mattn/go-sqlite3 v1.14.22/go.mod h1:Uh1q+B4BYcTPb+yiD3kU8Ct7aC0hY9fxUwlHK0RXw+Y=
