@@ -10,35 +10,18 @@ import (
 
 type beanBuffer struct {
 	bufferOnce     sync.Once
-	constructorMap map[reflect.Type]struct {
-		constructor any
-		args        []any
-	}
+	constructorMap map[reflect.Type]any
 }
 
 func GetBeanBuffer() *beanBuffer {
 	return &beanBuffer{
-		constructorMap: map[reflect.Type]struct {
-			constructor any
-			args        []any
-		}{},
+		constructorMap: map[reflect.Type]any{},
 	}
 }
 
 func (b *beanBuffer) RegisterBean(constructor any) {
 	beanType := reflect.TypeOf(constructor).Out(0)
-	b.constructorMap[beanType] = struct {
-		constructor any
-		args        []any
-	}{constructor: constructor, args: []any{}}
-}
-
-func (b *beanBuffer) RegisterBeanWithArgs(constructor any, args ...any) {
-	beanType := reflect.TypeOf(constructor).Out(0)
-	b.constructorMap[beanType] = struct {
-		constructor any
-		args        []any
-	}{constructor: constructor, args: args}
+	b.constructorMap[beanType] = constructor
 }
 
 func (b *beanBuffer) Buffer() error {
@@ -69,9 +52,9 @@ func (b *beanBuffer) Buffer() error {
 func (b *beanBuffer) getDependencyTrees() []collection.DescendNode[reflect.Type] {
 	var result []collection.DescendNode[reflect.Type]
 
-	for t, constructorInfo := range b.constructorMap {
+	for t, constructor := range b.constructorMap {
 		var leaves []collection.DescendNode[reflect.Type]
-		typeOf := reflect.TypeOf(constructorInfo.constructor)
+		typeOf := reflect.TypeOf(constructor)
 		for i := 0; i < typeOf.NumIn(); i++ {
 			leaf := b.recursiveDependencyTree(typeOf.In(i))
 			leaves = append(leaves, leaf)
@@ -91,8 +74,8 @@ func (b *beanBuffer) getDependencyTrees() []collection.DescendNode[reflect.Type]
 func (b *beanBuffer) recursiveDependencyTree(in reflect.Type) collection.DescendNode[reflect.Type] {
 	var trees []collection.DescendNode[reflect.Type]
 
-	if constructorInfo, ok := b.constructorMap[in]; ok {
-		typeOf := reflect.TypeOf(constructorInfo.constructor)
+	if constructor, ok := b.constructorMap[in]; ok {
+		typeOf := reflect.TypeOf(constructor)
 		for i := 0; i < typeOf.NumIn(); i++ {
 			leaf := b.recursiveDependencyTree(typeOf.In(i))
 			trees = append(trees, leaf)
@@ -123,8 +106,8 @@ func (b *beanBuffer) registerBeanRecursive(tree collection.DescendNode[reflect.T
 		}
 	}
 
-	if constructorInfo, ok := b.constructorMap[tree.This()]; ok {
-		return RegisterBeanWithArgs(constructorInfo.constructor, constructorInfo.args)
+	if constructor, ok := b.constructorMap[tree.This()]; ok {
+		return RegisterBean(constructor)
 	}
 
 	return errors.New(fmt.Sprintf("fail to create bean: %s\n", tree.This().String()))
