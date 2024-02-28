@@ -1,5 +1,7 @@
 package testEntity
 
+import "errors"
+
 type TestInterface1 interface {
 	Value1() string
 }
@@ -75,17 +77,6 @@ func (t *TestStruct6) Value6() string {
 	return "test structure6"
 }
 
-func NewTestInterface5(
-	interface4 TestInterface4,
-	interface6 TestInterface6,
-) TestInterface5 {
-	return &TestStruct5{
-		interface4: interface4,
-		interface6: interface6,
-	}
-}
-
-// ------
 type TestBeanBufferInterface1 interface{ TestBeanBufferValue1() string }
 type TestBeanBufferInterface2 interface{ TestBeanBufferValue2() string }
 type TestBeanBufferInterface3 interface{ TestBeanBufferValue3() string }
@@ -112,6 +103,16 @@ func NewTestBeanBufferInterface2(interface1 TestBeanBufferInterface1) TestBeanBu
 	return &TestBeanBufferStruct2{
 		interface1: interface1,
 	}
+}
+
+func NewTestBeanBufferInterface2MustErr(_ TestBeanBufferInterface1) (TestBeanBufferInterface2, error) {
+	return nil, errors.New("must error")
+}
+
+func NewTestBeanBufferInterface2WithNoErr(interface1 TestBeanBufferInterface1) (TestBeanBufferInterface2, error) {
+	return &TestBeanBufferStruct2{
+		interface1: interface1,
+	}, nil
 }
 
 type TestBeanBufferStruct3 struct {

@@ -19,9 +19,21 @@ func GetBeanBuffer() *beanBuffer {
 	}
 }
 
+// RegisterBean
+// constructor1: func(arg1, arg2, arg3, ....) (BeanType, error)
+// constructor2: func(arg1, arg2, arg3, ....) BeanType
 func (b *beanBuffer) RegisterBean(constructor any) {
 	beanType := reflect.TypeOf(constructor).Out(0)
 	b.constructorMap[beanType] = constructor
+}
+
+// RegisterBeans
+// constructor1: func(arg1, arg2, arg3, ....) (BeanType, error)
+// constructor2: func(arg1, arg2, arg3, ....) BeanType
+func (b *beanBuffer) RegisterBeans(constructors ...any) {
+	collection.ForEach(constructors, func(constructor any) {
+		b.RegisterBean(constructor)
+	})
 }
 
 func (b *beanBuffer) Buffer() error {

@@ -2,6 +2,7 @@ package bean
 
 import (
 	"errors"
+	"fmt"
 	"github.com/aivyss/typex/collection"
 	"github.com/aivyss/typex/utilx"
 	"reflect"
@@ -70,11 +71,25 @@ func RegisterBean(constructor any) error {
 func GetBean[T any]() (T, error) {
 	genericType := utilx.GetGenericType[T]()
 	if b, ok := m[genericType]; ok {
+		if b == nil {
+			var t T
+			return t, nil
+		}
+
 		return b.(T), nil
 	}
 
 	var t T
-	return t, errors.New("no bean")
+	return t, errors.New(fmt.Sprintf("no bean: %s", genericType.String()))
+}
+
+func MustGetBean[T any]() T {
+	bean, err := GetBean[T]()
+	if err != nil {
+		panic(err)
+	}
+
+	return bean
 }
 
 func Clean() {
