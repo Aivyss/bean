@@ -1,9 +1,11 @@
-package test
+package runtime_ioc
 
 import (
 	"errors"
 	"github.com/aivyss/bean"
-	"github.com/aivyss/bean/test/testEntity"
+	"github.com/aivyss/bean/test/testEntity/intf1"
+	"github.com/aivyss/bean/test/testEntity/intf2"
+	"github.com/aivyss/bean/test/testEntity/intf3"
 	rec "github.com/aivyss/typex/recover"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -12,7 +14,7 @@ import (
 func TestMustGetBean(t *testing.T) {
 	t.Run("panic occurs", func(t *testing.T) {
 		err := rec.CatchPanic(func() error {
-			_ = bean.MustGetBean[testEntity.TestInterface2]()
+			_ = bean.MustGetBean[intf2.TestInterface2]()
 
 			return nil
 		})
@@ -24,43 +26,43 @@ func TestMustGetBean(t *testing.T) {
 
 func TestRegisterBean(t *testing.T) {
 	t.Run("basic test", func(t *testing.T) {
-		err := bean.RegisterBean(func() testEntity.TestInterface1 {
-			return &testEntity.TestStruct1{}
+		err := bean.RegisterBean(func() intf1.TestInterface1 {
+			return &intf1.TestStruct1{}
 		})
 		assert.Nil(t, err)
 
-		b, err := bean.GetBean[testEntity.TestInterface1]()
+		b, err := bean.GetBean[intf1.TestInterface1]()
 		assert.Nil(t, err)
 		assert.NotNil(t, b)
 		bean.Clean()
 	})
 
 	t.Run("basic test nil interface", func(t *testing.T) {
-		err := bean.RegisterBean(func() testEntity.TestInterface1 {
-			var i testEntity.TestInterface1 // nil
+		err := bean.RegisterBean(func() intf1.TestInterface1 {
+			var i intf1.TestInterface1 // nil
 			return i
 		})
 		assert.Nil(t, err)
-		b, err := bean.GetBean[testEntity.TestInterface1]()
+		b, err := bean.GetBean[intf1.TestInterface1]()
 		assert.Nil(t, err)
 		assert.Nil(t, b)
 		bean.Clean()
 	})
 
 	t.Run("nested test", func(t *testing.T) {
-		err := bean.RegisterBean(func() testEntity.TestInterface2 {
-			return &testEntity.TestStruct2{}
+		err := bean.RegisterBean(func() intf2.TestInterface2 {
+			return &intf2.TestStruct2{}
 		})
 		assert.Nil(t, err)
 
-		err = bean.RegisterBean(testEntity.NewTestInterface3)
+		err = bean.RegisterBean(intf3.NewTestInterface3)
 		assert.Nil(t, err)
 
-		bean2, err := bean.GetBean[testEntity.TestInterface2]()
+		bean2, err := bean.GetBean[intf2.TestInterface2]()
 		assert.Nil(t, err)
 		assert.NotNil(t, bean2)
 
-		bean3, err := bean.GetBean[testEntity.TestInterface3]()
+		bean3, err := bean.GetBean[intf3.TestInterface3]()
 		assert.Nil(t, err)
 		assert.NotNil(t, bean3)
 		bean.Clean()
@@ -68,7 +70,7 @@ func TestRegisterBean(t *testing.T) {
 
 	t.Run("error check", func(t *testing.T) {
 		errMsg := "test error"
-		err := bean.RegisterBean(func() (testEntity.TestInterface2, error) {
+		err := bean.RegisterBean(func() (intf2.TestInterface2, error) {
 			return nil, errors.New(errMsg)
 		})
 
@@ -77,11 +79,11 @@ func TestRegisterBean(t *testing.T) {
 
 		bean.Clean()
 
-		err = bean.RegisterBean(func() (testEntity.TestInterface2, error) {
-			return &testEntity.TestStruct2{}, nil
+		err = bean.RegisterBean(func() (intf2.TestInterface2, error) {
+			return &intf2.TestStruct2{}, nil
 		})
 		assert.Nil(t, err)
-		b, err := bean.GetBean[testEntity.TestInterface2]()
+		b, err := bean.GetBean[intf2.TestInterface2]()
 		assert.Nil(t, err)
 		assert.NotNil(t, b)
 	})
@@ -102,22 +104,22 @@ func TestBasicTestPointer(t *testing.T) {
 func TestBeanBuffer(t *testing.T) {
 	t.Run("[1] buffer test - no error", func(t *testing.T) {
 		buff := bean.GetBeanBuffer()
-		buff.RegisterBean(testEntity.NewTestBeanBufferInterface3)
-		buff.RegisterBean(testEntity.NewTestBeanBufferInterface2)
-		buff.RegisterBean(testEntity.NewTestBeanBufferInterface1)
+		buff.RegisterBean(intf3.NewTestBeanBufferInterface3)
+		buff.RegisterBean(intf2.NewTestBeanBufferInterface2)
+		buff.RegisterBean(intf1.NewTestBeanBufferInterface1)
 
 		errs := buff.Buffer()
 		assert.Empty(t, errs)
 
-		bean1, err := bean.GetBean[testEntity.TestBeanBufferInterface1]()
+		bean1, err := bean.GetBean[intf1.TestBeanBufferInterface1]()
 		assert.Nil(t, err)
 		assert.NotNil(t, bean1)
 
-		bean2, err := bean.GetBean[testEntity.TestBeanBufferInterface2]()
+		bean2, err := bean.GetBean[intf2.TestBeanBufferInterface2]()
 		assert.Nil(t, err)
 		assert.NotNil(t, bean2)
 
-		bean3, err := bean.GetBean[testEntity.TestBeanBufferInterface3]()
+		bean3, err := bean.GetBean[intf3.TestBeanBufferInterface3]()
 		assert.Nil(t, err)
 		assert.NotNil(t, bean3)
 
@@ -131,23 +133,23 @@ func TestBeanBuffer(t *testing.T) {
 	t.Run("[2] buffer test - no error", func(t *testing.T) {
 		buff := bean.GetBeanBuffer()
 		buff.RegisterBeans(
-			testEntity.NewTestBeanBufferInterface3,
-			testEntity.NewTestBeanBufferInterface2,
-			testEntity.NewTestBeanBufferInterface1,
+			intf3.NewTestBeanBufferInterface3,
+			intf2.NewTestBeanBufferInterface2,
+			intf1.NewTestBeanBufferInterface1,
 		)
 
 		errs := buff.Buffer()
 		assert.Empty(t, errs)
 
-		bean1, err := bean.GetBean[testEntity.TestBeanBufferInterface1]()
+		bean1, err := bean.GetBean[intf1.TestBeanBufferInterface1]()
 		assert.Nil(t, err)
 		assert.NotNil(t, bean1)
 
-		bean2, err := bean.GetBean[testEntity.TestBeanBufferInterface2]()
+		bean2, err := bean.GetBean[intf2.TestBeanBufferInterface2]()
 		assert.Nil(t, err)
 		assert.NotNil(t, bean2)
 
-		bean3, err := bean.GetBean[testEntity.TestBeanBufferInterface3]()
+		bean3, err := bean.GetBean[intf3.TestBeanBufferInterface3]()
 		assert.Nil(t, err)
 		assert.NotNil(t, bean3)
 
@@ -161,23 +163,23 @@ func TestBeanBuffer(t *testing.T) {
 	t.Run("[3] buffer test - no error", func(t *testing.T) {
 		buff := bean.GetBeanBuffer()
 		buff.RegisterBeans(
-			testEntity.NewTestBeanBufferInterface3,
-			testEntity.NewTestBeanBufferInterface2WithNoErr,
-			testEntity.NewTestBeanBufferInterface1,
+			intf3.NewTestBeanBufferInterface3,
+			intf2.NewTestBeanBufferInterface2WithNoErr,
+			intf1.NewTestBeanBufferInterface1,
 		)
 
 		errs := buff.Buffer()
 		assert.Empty(t, errs)
 
-		bean1, err := bean.GetBean[testEntity.TestBeanBufferInterface1]()
+		bean1, err := bean.GetBean[intf1.TestBeanBufferInterface1]()
 		assert.Nil(t, err)
 		assert.NotNil(t, bean1)
 
-		bean2, err := bean.GetBean[testEntity.TestBeanBufferInterface2]()
+		bean2, err := bean.GetBean[intf2.TestBeanBufferInterface2]()
 		assert.Nil(t, err)
 		assert.NotNil(t, bean2)
 
-		bean3, err := bean.GetBean[testEntity.TestBeanBufferInterface3]()
+		bean3, err := bean.GetBean[intf3.TestBeanBufferInterface3]()
 		assert.Nil(t, err)
 		assert.NotNil(t, bean3)
 
@@ -191,9 +193,9 @@ func TestBeanBuffer(t *testing.T) {
 	t.Run("buffer test - must error", func(t *testing.T) {
 		buff := bean.GetBeanBuffer()
 		buff.RegisterBeans(
-			testEntity.NewTestBeanBufferInterface3,
-			testEntity.NewTestBeanBufferInterface2MustErr,
-			testEntity.NewTestBeanBufferInterface1,
+			intf3.NewTestBeanBufferInterface3,
+			intf2.NewTestBeanBufferInterface2MustErr,
+			intf1.NewTestBeanBufferInterface1,
 		)
 
 		errs := buff.Buffer()
