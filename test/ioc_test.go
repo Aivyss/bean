@@ -24,7 +24,7 @@ func TestMustGetBean(t *testing.T) {
 
 func TestRegisterBean(t *testing.T) {
 	t.Run("basic test", func(t *testing.T) {
-		err := bean.RegisterBean(func() testEntity.TestInterface1 {
+		err := bean.RegisterBeanEager(func() testEntity.TestInterface1 {
 			return &testEntity.TestStruct1{}
 		})
 		assert.Nil(t, err)
@@ -36,7 +36,7 @@ func TestRegisterBean(t *testing.T) {
 	})
 
 	t.Run("basic test nil interface", func(t *testing.T) {
-		err := bean.RegisterBean(func() testEntity.TestInterface1 {
+		err := bean.RegisterBeanEager(func() testEntity.TestInterface1 {
 			var i testEntity.TestInterface1 // nil
 			return i
 		})
@@ -48,12 +48,12 @@ func TestRegisterBean(t *testing.T) {
 	})
 
 	t.Run("nested test", func(t *testing.T) {
-		err := bean.RegisterBean(func() testEntity.TestInterface2 {
+		err := bean.RegisterBeanEager(func() testEntity.TestInterface2 {
 			return &testEntity.TestStruct2{}
 		})
 		assert.Nil(t, err)
 
-		err = bean.RegisterBean(testEntity.NewTestInterface3)
+		err = bean.RegisterBeanEager(testEntity.NewTestInterface3)
 		assert.Nil(t, err)
 
 		bean2, err := bean.GetBean[testEntity.TestInterface2]()
@@ -68,7 +68,7 @@ func TestRegisterBean(t *testing.T) {
 
 	t.Run("error check", func(t *testing.T) {
 		errMsg := "test error"
-		err := bean.RegisterBean(func() (testEntity.TestInterface2, error) {
+		err := bean.RegisterBeanEager(func() (testEntity.TestInterface2, error) {
 			return nil, errors.New(errMsg)
 		})
 
@@ -77,7 +77,7 @@ func TestRegisterBean(t *testing.T) {
 
 		bean.Clean()
 
-		err = bean.RegisterBean(func() (testEntity.TestInterface2, error) {
+		err = bean.RegisterBeanEager(func() (testEntity.TestInterface2, error) {
 			return &testEntity.TestStruct2{}, nil
 		})
 		assert.Nil(t, err)
@@ -90,7 +90,7 @@ func TestRegisterBean(t *testing.T) {
 func TestBasicTestPointer(t *testing.T) {
 	type TestStruct struct{}
 	newTestStruct := func() *TestStruct { return &TestStruct{} }
-	err := bean.RegisterBean(newTestStruct)
+	err := bean.RegisterBeanEager(newTestStruct)
 	assert.Nil(t, err)
 
 	b, err := bean.GetBean[*TestStruct]()
@@ -102,11 +102,11 @@ func TestBasicTestPointer(t *testing.T) {
 func TestBeanBuffer(t *testing.T) {
 	t.Run("[1] buffer test - no error", func(t *testing.T) {
 		buff := bean.GetBeanBuffer()
-		buff.RegisterBean(testEntity.NewTestBeanBufferInterface3)
-		buff.RegisterBean(testEntity.NewTestBeanBufferInterface2)
-		buff.RegisterBean(testEntity.NewTestBeanBufferInterface1)
+		buff.RegisterBeanLazy(testEntity.NewTestBeanBufferInterface3)
+		buff.RegisterBeanLazy(testEntity.NewTestBeanBufferInterface2)
+		buff.RegisterBeanLazy(testEntity.NewTestBeanBufferInterface1)
 
-		errs := buff.Buffer()
+		errs := buff.StartLazyLoading()
 		assert.Empty(t, errs)
 
 		bean1, err := bean.GetBean[testEntity.TestBeanBufferInterface1]()
@@ -122,7 +122,7 @@ func TestBeanBuffer(t *testing.T) {
 		assert.NotNil(t, bean3)
 
 		t.Run("2 times buffer", func(t *testing.T) {
-			err := buff.Buffer()
+			err := buff.StartLazyLoading()
 			assert.NotNil(t, err)
 		})
 		bean.Clean()
@@ -130,13 +130,13 @@ func TestBeanBuffer(t *testing.T) {
 
 	t.Run("[2] buffer test - no error", func(t *testing.T) {
 		buff := bean.GetBeanBuffer()
-		buff.RegisterBeans(
+		buff.RegisterBeansLazy(
 			testEntity.NewTestBeanBufferInterface3,
 			testEntity.NewTestBeanBufferInterface2,
 			testEntity.NewTestBeanBufferInterface1,
 		)
 
-		errs := buff.Buffer()
+		errs := buff.StartLazyLoading()
 		assert.Empty(t, errs)
 
 		bean1, err := bean.GetBean[testEntity.TestBeanBufferInterface1]()
@@ -152,7 +152,7 @@ func TestBeanBuffer(t *testing.T) {
 		assert.NotNil(t, bean3)
 
 		t.Run("2 times buffer", func(t *testing.T) {
-			err := buff.Buffer()
+			err := buff.StartLazyLoading()
 			assert.NotNil(t, err)
 		})
 		bean.Clean()
@@ -160,13 +160,13 @@ func TestBeanBuffer(t *testing.T) {
 
 	t.Run("[3] buffer test - no error", func(t *testing.T) {
 		buff := bean.GetBeanBuffer()
-		buff.RegisterBeans(
+		buff.RegisterBeansLazy(
 			testEntity.NewTestBeanBufferInterface3,
 			testEntity.NewTestBeanBufferInterface2WithNoErr,
 			testEntity.NewTestBeanBufferInterface1,
 		)
 
-		errs := buff.Buffer()
+		errs := buff.StartLazyLoading()
 		assert.Empty(t, errs)
 
 		bean1, err := bean.GetBean[testEntity.TestBeanBufferInterface1]()
@@ -182,7 +182,7 @@ func TestBeanBuffer(t *testing.T) {
 		assert.NotNil(t, bean3)
 
 		t.Run("2 times buffer", func(t *testing.T) {
-			err := buff.Buffer()
+			err := buff.StartLazyLoading()
 			assert.NotNil(t, err)
 		})
 		bean.Clean()
@@ -190,13 +190,13 @@ func TestBeanBuffer(t *testing.T) {
 
 	t.Run("buffer test - must error", func(t *testing.T) {
 		buff := bean.GetBeanBuffer()
-		buff.RegisterBeans(
+		buff.RegisterBeansLazy(
 			testEntity.NewTestBeanBufferInterface3,
 			testEntity.NewTestBeanBufferInterface2MustErr,
 			testEntity.NewTestBeanBufferInterface1,
 		)
 
-		errs := buff.Buffer()
+		errs := buff.StartLazyLoading()
 		assert.NotNil(t, errs)
 		bean.Clean()
 	})

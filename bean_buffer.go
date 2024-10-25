@@ -19,24 +19,24 @@ func GetBeanBuffer() *beanBuffer {
 	}
 }
 
-// RegisterBean
+// RegisterBeanLazy
 // constructor1: func(arg1, arg2, arg3, ....) (BeanType, error)
 // constructor2: func(arg1, arg2, arg3, ....) BeanType
-func (b *beanBuffer) RegisterBean(constructor any) {
+func (b *beanBuffer) RegisterBeanLazy(constructor any) {
 	beanType := reflect.TypeOf(constructor).Out(0)
 	b.constructorMap[beanType] = constructor
 }
 
-// RegisterBeans
+// RegisterBeansLazy
 // constructor1: func(arg1, arg2, arg3, ....) (BeanType, error)
 // constructor2: func(arg1, arg2, arg3, ....) BeanType
-func (b *beanBuffer) RegisterBeans(constructors ...any) {
+func (b *beanBuffer) RegisterBeansLazy(constructors ...any) {
 	collection.ForEach(constructors, func(constructor any) {
-		b.RegisterBean(constructor)
+		b.RegisterBeanLazy(constructor)
 	})
 }
 
-func (b *beanBuffer) Buffer() error {
+func (b *beanBuffer) StartLazyLoading() error {
 	var err error
 	isAlreadyInitialized := true
 
@@ -119,7 +119,7 @@ func (b *beanBuffer) registerBeanRecursive(tree collection.DescendNode[reflect.T
 	}
 
 	if constructor, ok := b.constructorMap[tree.This()]; ok {
-		return RegisterBean(constructor)
+		return RegisterBeanEager(constructor)
 	}
 
 	return errors.New(fmt.Sprintf("fail to create bean: %s\n", tree.This().String()))

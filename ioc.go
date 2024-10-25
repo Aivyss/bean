@@ -10,7 +10,7 @@ import (
 
 var m = map[reflect.Type]any{}
 
-func RegisterBean(constructor any) error {
+func RegisterBeanEager(constructor any) error {
 	fnTypeOf := reflect.TypeOf(constructor)
 
 	paramTypes := make([]reflect.Type, 0, fnTypeOf.NumIn())

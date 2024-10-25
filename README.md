@@ -25,14 +25,14 @@ type TypeB TypeA
 ```
 # Bean Registration
 There are individual and bulk registration methods for beans.
-## Individual Registration
+## Individual Registration (eager loading)
 ```go
-err := bean.RegisterBean(func() A {
+err := bean.RegisterBeanEager(func() A {
     // ...
 })
 ```
 ```go
-err := bean.RegisterBean(func() (B, error) {
+err := bean.RegisterBeanEager(func() (B, error) {
     // ...
 })
 ```
@@ -40,16 +40,16 @@ err := bean.RegisterBean(func() (B, error) {
 ```go
 buf := bean.GetBeanBuffer()
 
-buf.RegisterBean(func() A {
+buf.RegisterBeanLazy(func() A {
     // ...
 })
-buf.RegisterBean(func() (B, error) {
+buf.RegisterBeanLazy(func() (B, error) {
     // ...
 })
 
-err := buf.Buffer()
+err := buf.StartLazyLoading()
 ```
-Even with bulk registration, the library checks dependency relationships and creates beans in the required order. Therefore, it is not necessary to specify the order in which RegisterBean is called.
+Even with bulk registration, the library checks dependency relationships and creates beans in the required order. Therefore, it is not necessary to specify the order in which RegisterBeanEager is called.
 # Obtaining a Bean
 ```go
 a, err := bean.GetBean[A]()
@@ -103,10 +103,12 @@ func NewD() D {
 ```
 ```go
 buf := bean.GetBeanBuffer()
-buf.RegisterBean(NewA)
-buf.RegisterBean(NewB)
-buf.RegisterBean(NewC)
-buf.RegisterBean(NewD)
+buf.RegisterBeanLazy(NewA)
+buf.RegisterBeanLazy(NewB)
+buf.RegisterBeanLazy(NewC)
+buf.RegisterBeanLazy(NewD)
+
+_ = buf.StartLazyLoading()
 ```
 ## Dependencies
 ```
