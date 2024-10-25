@@ -64,3 +64,12 @@ func NewTypeBTwo() (TypeB, error) {
     return TypeB(two), nil
 }
 ```
+
+# Are there any limitations on constructor functions?
+Yes, there are.
+
+## Input Parameters
+Any type designated as a bean can be used. However, if there are parameters that are not designated as beans, the bean package will return an error. There are no restrictions on the number of parameters.
+
+## Returns
+Only two return patterns are allowed: either `(TypeA)` or `(TypeA, error)`.
